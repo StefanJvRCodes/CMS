@@ -1,0 +1,163 @@
+{
+  "name": "CMS Event Handler",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "cms-event",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-1",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "cms-event-webhook"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json[\"event_type\"]}}",
+              "operation": "equal",
+              "value2": "user.created"
+            }
+          ]
+        }
+      },
+      "id": "if-user-created",
+      "name": "If User Created",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json[\"event_type\"]}}",
+              "operation": "equal",
+              "value2": "content.published"
+            }
+          ]
+        }
+      },
+      "id": "if-content-published",
+      "name": "If Content Published",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [460, 500]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Handle user creation event\nconst userData = items[0].json.data;\nconsole.log(`New user created: ${userData.user_id}`);\n\n// You could:\n// - Send welcome email\n// - Create user profile in external system\n// - Notify administrators\n\nreturn [{\n  json: {\n    message: `Welcome email sent to user ${userData.user_id}`,\n    event_id: items[0].json.event_id,\n    processed_at: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "process-user-created",
+      "name": "Process User Created",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [680, 200]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Handle content published event\nconst contentData = items[0].json.data;\nconsole.log(`Content published: ${contentData.content_id}`);\n\n// You could:\n// - Send notifications to subscribers\n// - Update search index\n// - Generate social media posts\n// - Update sitemap\n\nreturn [{\n  json: {\n    message: `Notifications sent for content ${contentData.content_id}`,\n    event_id: items[0].json.event_id,\n    processed_at: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "process-content-published",
+      "name": "Process Content Published",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [680, 400]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}"
+      },
+      "id": "respond-success",
+      "name": "Respond Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [900, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "If User Created",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "If Content Published",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If User Created": {
+      "main": [
+        [
+          {
+            "node": "Process User Created",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Content Published": {
+      "main": [
+        [
+          {
+            "node": "Process Content Published",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process User Created": {
+      "main": [
+        [
+          {
+            "node": "Respond Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Content Published": {
+      "main": [
+        [
+          {
+            "node": "Respond Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {},
+  "versionId": "1",
+  "id": "cms-event-workflow",
+  "meta": {
+    "instanceId": "cms-instance"
+  },
+  "tags": [
+    {
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z",
+      "id": "1",
+      "name": "CMS"
+    }
+  ]
+}
