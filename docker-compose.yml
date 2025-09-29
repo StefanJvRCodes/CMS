@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  rabbitmq:
+    image: rabbitmq:3.12-management
+    container_name: cms-rabbitmq
+    hostname: rabbitmq
+    ports:
+      - "5672:5672"    # AMQP port
+      - "15672:15672"  # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: cms_user
+      RABBITMQ_DEFAULT_PASS: cms_password
+      RABBITMQ_DEFAULT_VHOST: cms_vhost
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - cms-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: cms-n8n
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=admin
+      - N8N_BASIC_AUTH_PASSWORD=admin123
+      - WEBHOOK_URL=http://localhost:5678/
+      - GENERIC_TIMEZONE=UTC
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./n8n/workflows:/home/node/.n8n/workflows
+    networks:
+      - cms-network
+    restart: unless-stopped
+
+  cms-app:
+    build: .
+    container_name: cms-app
+    ports:
+      - "8000:8000"
+    environment:
+      - RABBITMQ_URL=amqp://cms_user:cms_password@rabbitmq:5672/cms_vhost
+      - N8N_WEBHOOK_URL=http://n8n:5678/webhook
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      n8n:
+        condition: service_started
+    volumes:
+      - ./src:/app/src
+      - ./config:/app/config
+    networks:
+      - cms-network
+    restart: unless-stopped
+
+volumes:
+  rabbitmq_data:
+  n8n_data:
+
+networks:
+  cms-network:
+    driver: bridge
