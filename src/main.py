@@ -1,8 +1,13 @@
 """Main FastAPI application for the CMS Event-Driven System."""
 import logging
+import sys
+import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+# Add the parent directory to the Python path
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src.cms.api.routes import router as api_router
 from src.cms.events.connection import rabbitmq_connection

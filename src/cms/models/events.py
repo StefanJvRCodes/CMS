@@ -39,6 +39,13 @@ class CMSEvent(BaseModel):
         json_encoders = {
             datetime: lambda v: v.isoformat()
         }
+    
+    def dict(self, **kwargs):
+        """Override dict method to handle datetime serialization."""
+        data = super().dict(**kwargs)
+        if isinstance(data.get('timestamp'), datetime):
+            data['timestamp'] = data['timestamp'].isoformat()
+        return data
 
 
 class UserEvent(CMSEvent):

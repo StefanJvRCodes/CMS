@@ -36,6 +36,11 @@ class EventPublisher:
             # Convert event to dictionary for JSON serialization
             event_data = event.dict()
             
+            # Convert datetime to ISO format string for JSON serialization
+            if 'timestamp' in event_data:
+                if hasattr(event_data['timestamp'], 'isoformat'):
+                    event_data['timestamp'] = event_data['timestamp'].isoformat()
+            
             # Publish to RabbitMQ
             success = self.connection.publish_message(
                 message=event_data,
